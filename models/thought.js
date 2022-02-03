@@ -1,6 +1,6 @@
-const mongoose = require('mongoose')
+const { Schema, model } = require('mongoose')
 
-const reactionSchema = new mongoose.Schema({
+const reactionSchema = new Schema({
     reactionId: {
         type: Schema.Types.ObjectId
     },
@@ -25,7 +25,7 @@ reactionSchema.methods.getDate = function () {
 }
 
 
-const thoughtSchema = new mongoose.Schema(
+const thoughtSchema = new Schema(
     {
         thoughtText: {
             type: String, 
@@ -61,7 +61,7 @@ thoughtSchema.methods.getDate = function () {
     return `${myDate.getMonth()} - ${myDate.getDate()} - ${myDate.getYear()}`
 }
 
-const Thought = mongoose.model("Thought", thoughtSchema)
+const Thought = model("Thought", thoughtSchema)
 
 const handleError = (err) => console.error(err)
 
