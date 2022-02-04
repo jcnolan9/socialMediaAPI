@@ -1,16 +1,19 @@
 const router = require('express').Router();
-const { users } = require('./../../models')
+const { User } = require('../../models')
 
 
 router.get('/', (req, res) => {
-    users.find()
+    console.log("hello")
+    User.find()
         .then((users) => res.json(users))
         .catch((err) => res.status(500).json(err))
 })
 
 router.post('/', (req, res) => {
-    users.create(req.body)
+    console.log(req.body)
+    User.create(req.body)
         .then((userData) => {
+            console.log(userData)
             res.json(userData)
         })
         .catch((err) => res.status(500).json(err))
@@ -18,7 +21,7 @@ router.post('/', (req, res) => {
 
 
 router.get('/:userId', (req, res) => {
-    users.findOne({_id: req.params.userId})
+    User.findOne({_id: req.params.userId})
         .select('-__v')
         .populate('thoughts')
         .populate('friends')
@@ -28,11 +31,11 @@ router.get('/:userId', (req, res) => {
 
 
 router.put('/:userId', (req, res) => {
-    users.findByIdAndUpdate(req.params.userId,
+    User.findByIdAndUpdate(req.params.userId,
         {
             $set: {
                 username: req.body.username, 
-                email: req.params.email
+                email: req.body.email
             }
         }
     )
@@ -46,7 +49,7 @@ router.put('/:userId', (req, res) => {
 })
 
 router.delete('/:userId', (req, res) => {
-    users.deleteOne({_id: req.params.userId})
+    User.deleteOne({_id: req.params.userId})
         .then((user) => 
             !user ? res.status(404).json({ message: 'No user with that ID' }) : res.json({message: 'User successfully deleted'})
     )
@@ -55,10 +58,10 @@ router.delete('/:userId', (req, res) => {
 
 
 router.post('/:userId/friends/', (req, res) => {
-    users.create(req.body)
+    User.create(req.body)
         .then((friend) => {
-            return users.findOneAndUpdate(
-                {_id: req.body.userId},
+            return User.findOneAndUpdate(
+                {_id: req.params.userId},
                 {$addToSet: { friends: friend._id} },
                 { new : true }
             )
@@ -77,12 +80,12 @@ router.post('/:userId/friends/', (req, res) => {
 })
 
 router.delete('/:userId/friends/:friendId', (req, res) => {
-    users.findOneAndUpdate(
+    User.findOneAndUpdate(
             {_id: req.params.userId},
             {$pull: {friends: req.params.friendId }}
     )
         .then((user) => 
-            !user ? res.status(404).json({ message: 'No user with that ID' }) : res.json(user) 
+            !user ? res.status(404).json({ message: 'No user with that ID' }) : res.json({message: 'Succesfully deleted friend'}) 
         )
         .catch((err) => {
             console.log(err);

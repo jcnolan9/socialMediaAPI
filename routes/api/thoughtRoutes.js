@@ -1,18 +1,18 @@
 const router = require('express').Router();
-const { users, thoughts } = require('./../../models')
+const { User, Thought } = require('./../../models')
 
 
 router.get('/', (req, res) => {
-    thoughts.find()
-        .then((thoughts) => res.json(thoughts))
+    Thought.find()
+        .then((Thought) => res.json(Thought))
         .catch((err) => res.status(500).json(err))
 })
 
 router.post('/', (req, res) => {
-    thoughts.create(req.body)
+    Thought.create(req.body)
         .then((thought) => {
-           return users.findOneAndUpdate(
-                {username: thought.username},
+           return User.findOneAndUpdate(
+                {username: req.body.username},
                 {$addToSet: { thoughts: thought._id} },
                 { new : true }
             )
@@ -29,7 +29,7 @@ router.post('/', (req, res) => {
 
 
 router.get('/:thoughtId', (req, res) => {
-    thoughts.findOne({_id: req.params.userId})
+    Thought.findOne({_id: req.params.thoughtId})
         .select('-__v')
         .populate('reactions')
         .then((thought) => !thought ? res.status(404).json({ message: 'No thought with that ID' }) : res.json(thought))
@@ -38,7 +38,7 @@ router.get('/:thoughtId', (req, res) => {
 
 
 router.put('/:thoughtId', (req, res) => {
-    thoughts.findByIdAndUpdate(req.params.thought,
+    Thought.findByIdAndUpdate(req.params.thoughtId,
         {
             $set: {
                 thoughtText: req.body.thoughtText, 
@@ -55,7 +55,7 @@ router.put('/:thoughtId', (req, res) => {
 })
 
 router.delete('/:thoughtId', (req, res) => {
-    thoughts.deleteOne({_id: req.params.thoughtId})
+    Thought.deleteOne({_id: req.params.thoughtId})
         .then((thought) => 
             !thought ? res.status(404).json({ message: 'No thought with that ID' }) : res.json({message: 'Thought successfully deleted'})
     )
@@ -64,8 +64,8 @@ router.delete('/:thoughtId', (req, res) => {
 
 
 router.post('/:thoughtId/reactions', (req, res) => {
-    thoughts.findOneAndUpdate(
-        {_id: req.body.thoughtId},
+    Thought.findOneAndUpdate(
+        {_id: req.params.thoughtId},
         {$addToSet: { reactions: req.body} },
         { new : true }
     )
@@ -82,13 +82,18 @@ router.post('/:thoughtId/reactions', (req, res) => {
     })
 })
 
-router.delete('/:thoughtId/reactionId', (req, res) => {
-    thoughts.findOneAndUpdate(
+router.delete('/:thoughtId/reactions/:reactionId', (req, res) => {
+    Thought.findOneAndUpdate(
         {_id: req.params.thoughtId},
-        {$pull: {reactions: req.params.reactionId }}
-)
+        {$pull: {reactions:{_id: req.params.reactionId} }}
+        /*
+            this is different than deleting a friend from a user because the reactions
+            are just a schema and not an actual model. Have to be more specific and put the
+            "_id:" before the req.params.reactionId
+        */
+    )
     .then((thought) => 
-        !thought ? res.status(404).json({ message: 'No thought with that ID' }) : res.json(thought) 
+        !thought ? res.status(404).json({ message: 'No thought with that ID' }) : res.json(thought.reactions) 
     )
     .catch((err) => {
         console.log(err);
